@@ -13,7 +13,7 @@ a crude text output control.
 """
 
 
-from pygame import *
+import pygame
 
 
 ImgOnOff = []
@@ -33,24 +33,24 @@ def drawstatus(win):
     win.blit(Font.render('Status Area', 1, (155, 155, 155), bgcolor), (2, 2))
 
     pos = showtext(win, (10, 30), 'Mouse Focus', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[mouse.get_focused()], pos)
+    win.blit(ImgOnOff[pygame.mouse.get_focused()], pos)
 
     pos = showtext(win, (330, 30), 'Keyboard Focus', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[key.get_focused()], pos)
+    win.blit(ImgOnOff[pygame.key.get_focused()], pos)
 
     pos = showtext(win, (10, 60), 'Mouse Position', (255, 255, 255), bgcolor)
-    p = '%s, %s' % mouse.get_pos()
+    p = '%s, %s' % pygame.mouse.get_pos()
     pos = showtext(win, pos, p, bgcolor, (255, 255, 55))
 
     pos = showtext(win, (330, 60), 'Last Keypress', (255, 255, 255), bgcolor)
     if LastKey:
-        p = '%d, %s' % (LastKey, key.name(LastKey))
+        p = '%d, %s' % (LastKey, pygame.key.name(LastKey))
     else:
         p = 'None'
     pos = showtext(win, pos, p, bgcolor, (255, 255, 55))
 
     pos = showtext(win, (10, 90), 'Input Grabbed', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[event.get_grab()], pos)
+    win.blit(ImgOnOff[pygame.event.get_grab()], pos)
 
 
 def drawhistory(win, history):
@@ -69,13 +69,13 @@ def cleanup():
 
 
 def main():
-    init()
+    pygame.init()
 
-    win = display.set_mode((640, 480), RESIZABLE)
-    display.set_caption("Mouse Focus Workout")
+    win = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
+    pygame.display.set_caption("Mouse Focus Workout")
 
     global Font
-    Font = font.Font(None, 26)
+    Font = pygame.font.Font(None, 26)
 
     global ImgOnOff
     ImgOnOff.append(Font.render("Off", 1, (0, 0, 0), (255, 50, 50)))
@@ -84,36 +84,36 @@ def main():
     history = []
 
     #let's turn on the joysticks just so we can play with em
-    for x in range(joystick.get_count()):
-        j = joystick.Joystick(x)
+    for x in range(pygame.joystick.get_count()):
+        j = pygame.joystick.Joystick(x)
         j.init()
         txt = 'Enabled joystick: ' + j.get_name()
         img = Font.render(txt, 1, (50, 200, 50), (0, 0, 0))
         history.append(img)
-    if not joystick.get_count():
+    if not pygame.joystick.get_count():
         img = Font.render('No Joysticks to Initialize', 1, (50, 200, 50), (0, 0, 0))
         history.append(img)
 
     going = True
     while going:
-        for e in event.get():
-            if e.type == QUIT:
+        for e in pygame.event.get():
+            if e.type == pygame.QUIT:
                 going = False
-            if e.type == KEYDOWN:
-                if e.key == K_ESCAPE:
+            if e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_ESCAPE:
                     going = False
                 else:
                     global LastKey
                     LastKey = e.key
-            if e.type == MOUSEBUTTONDOWN:
-                event.set_grab(1)
-            elif e.type == MOUSEBUTTONUP:
-                event.set_grab(0)
-            if e.type == VIDEORESIZE:
-                win = display.set_mode(e.size, RESIZABLE)
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                pygame.event.set_grab(1)
+            elif e.type == pygame.MOUSEBUTTONUP:
+                pygame.event.set_grab(0)
+            if e.type == pygame.VIDEORESIZE:
+                win = pygame.display.set_mode(e.size, pygame.RESIZABLE)
 
-            if e.type != MOUSEMOTION:
-                txt = '%s: %s' % (event.event_name(e.type), e.dict)
+            if e.type != pygame.MOUSEMOTION:
+                txt = '%s: %s' % (pygame.event.event_name(e.type), e.dict)
                 img = Font.render(txt, 1, (50, 200, 50), (0, 0, 0))
                 history.append(img)
                 history = history[-13:]
@@ -122,8 +122,8 @@ def main():
         drawstatus(win)
         drawhistory(win, history)
 
-        display.flip()
-        time.wait(10)
+        pygame.display.flip()
+        pygame.time.wait(10)
 
     cleanup()
 
