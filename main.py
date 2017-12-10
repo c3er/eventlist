@@ -64,6 +64,10 @@ def drawhistory(win, history):
         ypos -= Font.get_height()
 
 
+def cleanup():
+    pygame.quit()
+
+
 def main():
     init()
 
@@ -121,8 +125,7 @@ def main():
         display.flip()
         time.wait(10)
 
-    quit()
-
+    cleanup()
 
 if __name__ == '__main__':
     main()
