@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Source: https://github.com/atizo/pygame/blob/master/examples/eventlist.py
+# Based on: https://github.com/atizo/pygame/blob/master/examples/eventlist.py
 
 """Eventlist is a sloppy style of pygame, but is a handy
 tool for learning about pygame events and input. At the
@@ -16,52 +16,93 @@ a crude text output control.
 import pygame
 
 
-ImgOnOff = []
-Font = None
-LastKey = None
+FONT_SIZE = 26
+
+WINDOW_WIDTH = 640
+WINDOW_HEIGHT = 480
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT
+
+STATUS_AREA_RECT = 0, 0, WINDOW_WIDTH, 120
+STATUS_AREA_LABEL_POS    = 2  , 2
+MOUSE_FOCUS_LABEL_POS    = 10 , 30
+KEYBOARD_FOCUS_LABEL_POS = 330, 30
+MOUSE_POSITION_LABEL_POS = 10 , 60
+LAST_KEYPRESS_LABEL_POS  = 330, 60
+INPUT_GRABBED_LABEL_POS  = 10 , 90
+
+HISTORY_LABEL_POS = 2, 132
+HISTORY_BORDER_SIZE = 10
+HISTORY_LINE_COUNT = 13
+
+WHITE      = 255, 255, 255
+LIGHTGREY  = 155, 155, 155
+DARKGREY   = 50 , 50 , 50 
+BLACK      = 0  , 0  , 0
+RED        = 255, 50 , 50
+YELLOW     = 255, 255, 55
+LIGHTGREEN = 50 , 255, 50
+DARKGREEN  = 50 , 200, 50
+
+LOOP_PAUSE_TIME = 10  # ms
+
+
+_switch_img = []
+_font = None
+
+
+class Status:
+    def __init__(self):
+        self.lastkey = None
+        self.update()
+
+    def update(self):
+        self.has_mousefocus = pygame.mouse.get_focused()
+        self.has_keyfocus = pygame.key.get_focused()
+        self.mousepos = pygame.mouse.get_pos()
+        self.has_grab = pygame.event.get_grab()
 
 
 def showtext(win, pos, text, color, bgcolor):
-    textimg = Font.render(text, 1, color, bgcolor)
+    textimg = _font.render(text, True, color, bgcolor)
     win.blit(textimg, pos)
     return pos[0] + textimg.get_width() + 5, pos[1]
 
 
-def drawstatus(win):
-    bgcolor = 50, 50, 50
-    win.fill(bgcolor, (0, 0, 640, 120))
-    win.blit(Font.render('Status Area', 1, (155, 155, 155), bgcolor), (2, 2))
+def drawstatus(win, status):
+    win.fill(DARKGREY, STATUS_AREA_RECT)
+    win.blit(_font.render('Status Area', 1, LIGHTGREY, DARKGREY), STATUS_AREA_LABEL_POS)
 
-    pos = showtext(win, (10, 30), 'Mouse Focus', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[pygame.mouse.get_focused()], pos)
+    pos = showtext(win, MOUSE_FOCUS_LABEL_POS, 'Mouse Focus', WHITE, DARKGREY)
+    win.blit(_switch_img[status.has_mousefocus], pos)
 
-    pos = showtext(win, (330, 30), 'Keyboard Focus', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[pygame.key.get_focused()], pos)
+    pos = showtext(win, KEYBOARD_FOCUS_LABEL_POS, 'Keyboard Focus', WHITE, DARKGREY)
+    win.blit(_switch_img[status.has_keyfocus], pos)
 
-    pos = showtext(win, (10, 60), 'Mouse Position', (255, 255, 255), bgcolor)
-    p = '%s, %s' % pygame.mouse.get_pos()
-    pos = showtext(win, pos, p, bgcolor, (255, 255, 55))
+    pos = showtext(win, MOUSE_POSITION_LABEL_POS, 'Mouse Position', WHITE, DARKGREY)
+    mousepos = "{}, {}".format(*status.mousepos)
+    showtext(win, pos, mousepos, DARKGREY, YELLOW)
 
-    pos = showtext(win, (330, 60), 'Last Keypress', (255, 255, 255), bgcolor)
-    if LastKey:
-        p = '%d, %s' % (LastKey, pygame.key.name(LastKey))
+    pos = showtext(win, LAST_KEYPRESS_LABEL_POS, 'Last Keypress', WHITE, DARKGREY)
+    if status.lastkey:
+        lastkey = f"{status.lastkey}, {pygame.key.name(status.lastkey)}"
     else:
-        p = 'None'
-    pos = showtext(win, pos, p, bgcolor, (255, 255, 55))
+        lastkey = 'None'
+    showtext(win, pos, lastkey, DARKGREY, YELLOW)
 
-    pos = showtext(win, (10, 90), 'Input Grabbed', (255, 255, 255), bgcolor)
-    win.blit(ImgOnOff[pygame.event.get_grab()], pos)
+    pos = showtext(win, INPUT_GRABBED_LABEL_POS, 'Input Grabbed', WHITE, DARKGREY)
+    win.blit(_switch_img[status.has_grab], pos)
 
 
 def drawhistory(win, history):
-    win.blit(Font.render('Event History Area', 1, (155, 155, 155), (0,0,0)), (2, 132))
-    ypos = 450
+    fontheight = _font.get_height()
+    win.blit(_font.render('Event History Area', True, LIGHTGREY, BLACK), HISTORY_LABEL_POS)
+    ypos = WINDOW_HEIGHT - HISTORY_BORDER_SIZE - fontheight
     h = list(history)
     h.reverse()
     for line in h:
-        r = win.blit(line, (10, ypos))
-        win.fill(0, (r.right, r.top, 620, r.height))
-        ypos -= Font.get_height()
+        r = win.blit(line, (HISTORY_BORDER_SIZE, ypos))
+        win.fill(0, (r.right, r.top, WINDOW_WIDTH - HISTORY_BORDER_SIZE, r.height))
+        ypos -= fontheight
 
 
 def cleanup():
@@ -69,63 +110,68 @@ def cleanup():
 
 
 def main():
+    global _font
+    global _switch_img
+
     pygame.init()
 
-    win = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
-    pygame.display.set_caption("Mouse Focus Workout")
+    win = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
+    pygame.display.set_caption("Event List")
 
-    global Font
-    Font = pygame.font.Font(None, 26)
+    _font = pygame.font.Font(None, FONT_SIZE)
 
-    global ImgOnOff
-    ImgOnOff.append(Font.render("Off", 1, (0, 0, 0), (255, 50, 50)))
-    ImgOnOff.append(Font.render("On", 1, (0, 0, 0), (50, 255, 50)))
+    _switch_img.append(_font.render("Off", True, BLACK, RED))
+    _switch_img.append(_font.render("On", True, BLACK, LIGHTGREEN))
 
     history = []
+    status = Status()
 
-    #let's turn on the joysticks just so we can play with em
-    for x in range(pygame.joystick.get_count()):
-        j = pygame.joystick.Joystick(x)
-        j.init()
-        txt = 'Enabled joystick: ' + j.get_name()
-        img = Font.render(txt, 1, (50, 200, 50), (0, 0, 0))
+    # Joysticks can be displayed only if they are initialized
+    for i in range(pygame.joystick.get_count()):
+        joystick = pygame.joystick.Joystick(i)
+        joystick.init()
+        txt = f'Enabled joystick: {joystick.get_name()}'
+        img = _font.render(txt, True, DARKGREEN, BLACK)
         history.append(img)
-    if not pygame.joystick.get_count():
-        img = Font.render('No Joysticks to Initialize', 1, (50, 200, 50), (0, 0, 0))
+    if pygame.joystick.get_count() == 0:
+        img = _font.render('No Joysticks to Initialize', True, DARKGREEN, BLACK)
         history.append(img)
 
-    going = True
-    while going:
+    running = True
+    while running:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                going = False
+                running = False
+
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE:
-                    going = False
+                    running = False
                 else:
-                    global LastKey
-                    LastKey = e.key
+                    status.lastkey = e.key
+
             if e.type == pygame.MOUSEBUTTONDOWN:
-                pygame.event.set_grab(1)
+                pygame.event.set_grab(True)
             elif e.type == pygame.MOUSEBUTTONUP:
-                pygame.event.set_grab(0)
+                pygame.event.set_grab(False)
+
             if e.type == pygame.VIDEORESIZE:
                 win = pygame.display.set_mode(e.size, pygame.RESIZABLE)
 
             if e.type != pygame.MOUSEMOTION:
-                txt = '%s: %s' % (pygame.event.event_name(e.type), e.dict)
-                img = Font.render(txt, 1, (50, 200, 50), (0, 0, 0))
+                txt = f"{pygame.event.event_name(e.type)}: {e.dict}"
+                img = _font.render(txt, True, DARKGREEN, BLACK)
                 history.append(img)
-                history = history[-13:]
+                history = history[-HISTORY_LINE_COUNT:]
+        status.update()
 
-
-        drawstatus(win)
+        drawstatus(win, status)
         drawhistory(win, history)
 
         pygame.display.flip()
-        pygame.time.wait(10)
+        pygame.time.wait(LOOP_PAUSE_TIME)
 
     cleanup()
+
 
 if __name__ == '__main__':
     main()
