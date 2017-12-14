@@ -13,6 +13,8 @@ a crude text output control.
 """
 
 
+import collections
+
 import pygame
 
 
@@ -115,22 +117,33 @@ class Status:
         self.window.blit(_switch_img[pygame.event.get_grab()], pos)
 
 
+class History(collections.UserList):
+    def __init__(self, win):
+        super().__init__()
+        self.window = win
+
+    def draw(self):
+        images = [
+            _font.render(line, True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
+            for line in self.data[-HISTORY_LINE_COUNT:]
+        ]
+        fontheight = _font.get_height()
+        self.window.blit(
+            _font.render('Event History Area', True, AREA_LABEL_COLOR, HISTORY_AREA_BGCOLOR),
+            HISTORY_LABEL_POS
+        )
+        ypos = WINDOW_HEIGHT - HISTORY_BORDER_SIZE - fontheight
+        images.reverse()
+        for img in images:
+            r = self.window.blit(img, (HISTORY_BORDER_SIZE, ypos))
+            self.window.fill(0, (r.right, r.top, WINDOW_WIDTH - HISTORY_BORDER_SIZE, r.height))
+            ypos -= fontheight
+
+
 def showtext(win, pos, text, color, bgcolor):
     textimg = _font.render(text, True, color, bgcolor)
     win.blit(textimg, pos)
     return pos[0] + textimg.get_width() + 5, pos[1]
-
-
-def drawhistory(win, history):
-    fontheight = _font.get_height()
-    win.blit(_font.render('Event History Area', True, AREA_LABEL_COLOR, HISTORY_AREA_BGCOLOR), HISTORY_LABEL_POS)
-    ypos = WINDOW_HEIGHT - HISTORY_BORDER_SIZE - fontheight
-    h = list(history)
-    h.reverse()
-    for line in h:
-        r = win.blit(line, (HISTORY_BORDER_SIZE, ypos))
-        win.fill(0, (r.right, r.top, WINDOW_WIDTH - HISTORY_BORDER_SIZE, r.height))
-        ypos -= fontheight
 
 
 def cleanup():
@@ -151,19 +164,16 @@ def main():
     _switch_img.append(_font.render("Off", True, STATUS_INFO_FONT_COLOR, OFFSWITCH_BGCOLOR))
     _switch_img.append(_font.render("On", True, STATUS_INFO_FONT_COLOR, ONSWITCH_BGCOLOR))
 
-    history = []
+    history = History(win)
     status = Status(win)
 
     # Joysticks can be displayed only if they are initialized
     for i in range(pygame.joystick.get_count()):
         joystick = pygame.joystick.Joystick(i)
         joystick.init()
-        txt = f'Enabled joystick: {joystick.get_name()}'
-        img = _font.render(txt, True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
-        history.append(img)
+        history.append(f'Enabled joystick: {joystick.get_name()}')
     if pygame.joystick.get_count() == 0:
-        img = _font.render('No Joysticks to Initialize', True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
-        history.append(img)
+        history.append('No Joysticks to Initialize')
 
     running = True
     while running:
@@ -186,13 +196,10 @@ def main():
                 win = pygame.display.set_mode(e.size, pygame.RESIZABLE)
 
             if e.type != pygame.MOUSEMOTION:
-                txt = f"{pygame.event.event_name(e.type)}: {e.dict}"
-                img = _font.render(txt, True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
-                history.append(img)
-                history = history[-HISTORY_LINE_COUNT:]
+                history.append(f"{pygame.event.event_name(e.type)}: {e.dict}")
 
         status.update()
-        drawhistory(win, history)
+        history.draw()
 
         pygame.display.flip()
         pygame.time.wait(LOOP_PAUSE_TIME)
