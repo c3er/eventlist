@@ -51,46 +51,40 @@ _font = None
 
 
 class Status:
-    def __init__(self):
+    def __init__(self, win):
+        self.window = win
         self.lastkey = None
         self.update()
 
     def update(self):
-        self.has_mousefocus = pygame.mouse.get_focused()
-        self.has_keyfocus = pygame.key.get_focused()
-        self.mousepos = pygame.mouse.get_pos()
-        self.has_grab = pygame.event.get_grab()
+        self.window.fill(DARKGREY, STATUS_AREA_RECT)
+        self.window.blit(_font.render('Status Area', 1, LIGHTGREY, DARKGREY), STATUS_AREA_LABEL_POS)
+
+        pos = showtext(self.window, MOUSE_FOCUS_LABEL_POS, 'Mouse Focus', WHITE, DARKGREY)
+        self.window.blit(_switch_img[pygame.mouse.get_focused()], pos)
+
+        pos = showtext(self.window, KEYBOARD_FOCUS_LABEL_POS, 'Keyboard Focus', WHITE, DARKGREY)
+        self.window.blit(_switch_img[pygame.key.get_focused()], pos)
+
+        pos = showtext(self.window, MOUSE_POSITION_LABEL_POS, 'Mouse Position', WHITE, DARKGREY)
+        mousepos = "{}, {}".format(*pygame.mouse.get_pos())
+        showtext(self.window, pos, mousepos, DARKGREY, YELLOW)
+
+        pos = showtext(self.window, LAST_KEYPRESS_LABEL_POS, 'Last Keypress', WHITE, DARKGREY)
+        if self.lastkey:
+            lastkey = f"{self.lastkey}, {pygame.key.name(self.lastkey)}"
+        else:
+            lastkey = 'None'
+        showtext(self.window, pos, lastkey, DARKGREY, YELLOW)
+
+        pos = showtext(self.window, INPUT_GRABBED_LABEL_POS, 'Input Grabbed', WHITE, DARKGREY)
+        self.window.blit(_switch_img[pygame.event.get_grab()], pos)
 
 
 def showtext(win, pos, text, color, bgcolor):
     textimg = _font.render(text, True, color, bgcolor)
     win.blit(textimg, pos)
     return pos[0] + textimg.get_width() + 5, pos[1]
-
-
-def drawstatus(win, status):
-    win.fill(DARKGREY, STATUS_AREA_RECT)
-    win.blit(_font.render('Status Area', 1, LIGHTGREY, DARKGREY), STATUS_AREA_LABEL_POS)
-
-    pos = showtext(win, MOUSE_FOCUS_LABEL_POS, 'Mouse Focus', WHITE, DARKGREY)
-    win.blit(_switch_img[status.has_mousefocus], pos)
-
-    pos = showtext(win, KEYBOARD_FOCUS_LABEL_POS, 'Keyboard Focus', WHITE, DARKGREY)
-    win.blit(_switch_img[status.has_keyfocus], pos)
-
-    pos = showtext(win, MOUSE_POSITION_LABEL_POS, 'Mouse Position', WHITE, DARKGREY)
-    mousepos = "{}, {}".format(*status.mousepos)
-    showtext(win, pos, mousepos, DARKGREY, YELLOW)
-
-    pos = showtext(win, LAST_KEYPRESS_LABEL_POS, 'Last Keypress', WHITE, DARKGREY)
-    if status.lastkey:
-        lastkey = f"{status.lastkey}, {pygame.key.name(status.lastkey)}"
-    else:
-        lastkey = 'None'
-    showtext(win, pos, lastkey, DARKGREY, YELLOW)
-
-    pos = showtext(win, INPUT_GRABBED_LABEL_POS, 'Input Grabbed', WHITE, DARKGREY)
-    win.blit(_switch_img[status.has_grab], pos)
 
 
 def drawhistory(win, history):
@@ -124,7 +118,7 @@ def main():
     _switch_img.append(_font.render("On", True, BLACK, LIGHTGREEN))
 
     history = []
-    status = Status()
+    status = Status(win)
 
     # Joysticks can be displayed only if they are initialized
     for i in range(pygame.joystick.get_count()):
@@ -162,9 +156,8 @@ def main():
                 img = _font.render(txt, True, DARKGREEN, BLACK)
                 history.append(img)
                 history = history[-HISTORY_LINE_COUNT:]
+                
         status.update()
-
-        drawstatus(win, status)
         drawhistory(win, history)
 
         pygame.display.flip()
