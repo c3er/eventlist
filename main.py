@@ -157,6 +157,10 @@ class History(collections.UserList):
             ypos -= fontheight
 
 
+def init_window(size):
+    return pygame.display.set_mode(size, pygame.RESIZABLE)
+
+
 def showtext(win, pos, text, color, bgcolor):
     textimg = _font.render(text, True, color, bgcolor)
     win.blit(textimg, pos)
@@ -172,7 +176,7 @@ def main():
 
     pygame.init()
 
-    win = pygame.display.set_mode(WINDOW_SIZE, pygame.RESIZABLE)
+    win = init_window(WINDOW_SIZE)
     pygame.display.set_caption("Event List")
 
     _font = pygame.font.Font(None, FONT_SIZE)
@@ -209,7 +213,7 @@ def main():
                 pygame.event.set_grab(False)
 
             if e.type == pygame.VIDEORESIZE:
-                win = pygame.display.set_mode(e.size, pygame.RESIZABLE)
+                win = init_window(e.size)
 
             if e.type != pygame.MOUSEMOTION:
                 history.append(f"{pygame.event.event_name(e.type)}: {e.dict}")
