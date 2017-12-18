@@ -20,7 +20,7 @@ WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 480
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT
 
-STATUS_AREA_RECT = 0, 0, WINDOW_WIDTH, 120
+STATUS_AREA_HEIGHT = 120
 STATUS_AREA_LABEL_POS    = 2  , 2
 MOUSE_FOCUS_LABEL_POS    = 10 , 30
 MOUSE_FOCUS_INFO_POS     = 150, 30
@@ -62,7 +62,10 @@ class Status:
         self.update()
 
     def update(self):
-        self.window.fill(STATUS_AREA_BGCOLOR, STATUS_AREA_RECT)
+        self.window.fill(
+            STATUS_AREA_BGCOLOR,
+            (0, 0, self.window.get_width(), STATUS_AREA_HEIGHT)
+        )
         self.window.blit(
             _font.render('Status Area', 1, AREA_LABEL_COLOR, STATUS_AREA_BGCOLOR),
             STATUS_AREA_LABEL_POS
