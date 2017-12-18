@@ -23,10 +23,16 @@ WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT
 STATUS_AREA_RECT = 0, 0, WINDOW_WIDTH, 120
 STATUS_AREA_LABEL_POS    = 2  , 2
 MOUSE_FOCUS_LABEL_POS    = 10 , 30
-KEYBOARD_FOCUS_LABEL_POS = 330, 30
+MOUSE_FOCUS_INFO_POS     = 150, 30
 MOUSE_POSITION_LABEL_POS = 10 , 60
-LAST_KEYPRESS_LABEL_POS  = 330, 60
+MOUSE_POSITION_INFO_POS  = 150, 60
+MOUSE_POSITION_INFO_POS  = 150, 60
 INPUT_GRABBED_LABEL_POS  = 10 , 90
+INPUT_GRABBED_INFO_POS   = 150, 90
+KEYBOARD_FOCUS_LABEL_POS = 330, 30
+KEYBOARD_FOCUS_INFO_POS  = 470, 30
+LAST_KEYPRESS_LABEL_POS  = 330, 60
+LAST_KEYPRESS_INFO_POS   = 470, 60
 
 HISTORY_LABEL_POS = 2, 132
 HISTORY_BORDER_SIZE = 10
@@ -62,25 +68,16 @@ class Status:
             STATUS_AREA_LABEL_POS
         )
 
-        pos = showtext(
+        showtext(
             self.window,
             MOUSE_FOCUS_LABEL_POS,
             'Mouse Focus',
             STATUS_LABEL_COLOR,
             STATUS_AREA_BGCOLOR
         )
-        self.window.blit(_switch_img[pygame.mouse.get_focused()], pos)
+        self.window.blit(_switch_img[pygame.mouse.get_focused()], MOUSE_FOCUS_INFO_POS)
 
-        pos = showtext(
-            self.window,
-            KEYBOARD_FOCUS_LABEL_POS,
-            'Keyboard Focus',
-            STATUS_LABEL_COLOR,
-            STATUS_AREA_BGCOLOR
-        )
-        self.window.blit(_switch_img[pygame.key.get_focused()], pos)
-
-        pos = showtext(
+        showtext(
             self.window,
             MOUSE_POSITION_LABEL_POS,
             'Mouse Position',
@@ -88,9 +85,33 @@ class Status:
             STATUS_AREA_BGCOLOR
         )
         mousepos = "{}, {}".format(*pygame.mouse.get_pos())
-        showtext(self.window, pos, mousepos, STATUS_INFO_FONT_COLOR, STATUS_INFO_BGCOLOR)
+        showtext(
+            self.window,
+            MOUSE_POSITION_INFO_POS,
+            mousepos,
+            STATUS_INFO_FONT_COLOR,
+            STATUS_INFO_BGCOLOR
+        )
 
-        pos = showtext(
+        showtext(
+            self.window,
+            INPUT_GRABBED_LABEL_POS,
+            'Input Grabbed',
+            STATUS_LABEL_COLOR,
+            STATUS_AREA_BGCOLOR
+        )
+        self.window.blit(_switch_img[pygame.event.get_grab()], INPUT_GRABBED_INFO_POS)
+
+        showtext(
+            self.window,
+            KEYBOARD_FOCUS_LABEL_POS,
+            'Keyboard Focus',
+            STATUS_LABEL_COLOR,
+            STATUS_AREA_BGCOLOR
+        )
+        self.window.blit(_switch_img[pygame.key.get_focused()], KEYBOARD_FOCUS_INFO_POS)
+
+        showtext(
             self.window,
             LAST_KEYPRESS_LABEL_POS,
             'Last Keypress',
@@ -101,16 +122,13 @@ class Status:
             lastkey = f"{self.lastkey}, {pygame.key.name(self.lastkey)}"
         else:
             lastkey = 'None'
-        showtext(self.window, pos, lastkey, STATUS_INFO_FONT_COLOR, STATUS_INFO_BGCOLOR)
-
-        pos = showtext(
+        showtext(
             self.window,
-            INPUT_GRABBED_LABEL_POS,
-            'Input Grabbed',
-            STATUS_LABEL_COLOR,
-            STATUS_AREA_BGCOLOR
+            LAST_KEYPRESS_INFO_POS,
+            lastkey,
+            STATUS_INFO_FONT_COLOR,
+            STATUS_INFO_BGCOLOR
         )
-        self.window.blit(_switch_img[pygame.event.get_grab()], pos)
 
 
 class History(collections.UserList):
@@ -139,7 +157,6 @@ class History(collections.UserList):
 def showtext(win, pos, text, color, bgcolor):
     textimg = _font.render(text, True, color, bgcolor)
     win.blit(textimg, pos)
-    return pos[0] + textimg.get_width() + 5, pos[1]
 
 
 def cleanup():
