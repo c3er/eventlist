@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # Based on: https://github.com/atizo/pygame/blob/master/examples/eventlist.py
+# As stated in the Pygame readme file (https://github.com/atizo/pygame/blob/master/readme.rst),
+# the used example is licensed as public domain.
 
 """A handy tool for learning about pygame events and input.
 At the top of the screen are the state of several device
