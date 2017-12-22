@@ -18,9 +18,9 @@ import pygame
 
 FONT_SIZE = 26
 
-WINDOW_WIDTH = 640
-WINDOW_HEIGHT = 480
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT
+MIN_WINDOW_WIDTH = 640
+MIN_WINDOW_HEIGHT = 480
+MIN_WINDOW_SIZE = MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT
 
 STATUS_AREA_HEIGHT = 120
 STATUS_AREA_LABEL_POS    = 2  , 2
@@ -36,7 +36,7 @@ KEYBOARD_FOCUS_INFO_POS  = 470, 30
 LAST_KEYPRESS_LABEL_POS  = 330, 60
 LAST_KEYPRESS_INFO_POS   = 470, 60
 
-HISTORY_LABEL_POS = 2, 132
+HISTORY_LABEL_POS = 2, 130
 HISTORY_BORDER_SIZE = 10
 HISTORY_LINE_COUNT = 17
 
@@ -142,25 +142,42 @@ class History(collections.UserList):
         self.window = win
 
     def draw(self):
-        images = [
-            _font.render(line, True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
-            for line in self.data[-HISTORY_LINE_COUNT:]
-        ]
+        windowheight = self.window.get_height()
         fontheight = _font.get_height()
+
+        ytop = HISTORY_LABEL_POS[1] + fontheight
+        ybottom = windowheight - HISTORY_BORDER_SIZE
+
+        linecount = (ybottom - ytop) // fontheight
+
         self.window.blit(
             _font.render('Event History Area', True, AREA_LABEL_COLOR, HISTORY_AREA_BGCOLOR),
             HISTORY_LABEL_POS
         )
-        ypos = WINDOW_HEIGHT - HISTORY_BORDER_SIZE - fontheight
+
+        images = [
+            _font.render(line, True, HISTORY_FONT_COLOR, HISTORY_AREA_BGCOLOR)
+            for line in self.data[-linecount:]
+        ]
         images.reverse()
+        ypos = ybottom - fontheight
         for img in images:
-            r = self.window.blit(img, (HISTORY_BORDER_SIZE, ypos))
-            self.window.fill(0, (r.right, r.top, WINDOW_WIDTH - HISTORY_BORDER_SIZE, r.height))
+            rect = self.window.blit(img, (HISTORY_BORDER_SIZE, ypos))
+            self.window.fill(
+                0,
+                (rect.right, rect.top, self.window.get_width() - HISTORY_BORDER_SIZE, rect.height)
+            )
             ypos -= fontheight
 
 
 def init_window(size):
-    return pygame.display.set_mode(size, pygame.RESIZABLE)
+    # The layout breaks if the window is too small
+    width, height = size
+    if width < MIN_WINDOW_WIDTH:
+        width = MIN_WINDOW_WIDTH
+    if height < MIN_WINDOW_HEIGHT:
+        height = MIN_WINDOW_HEIGHT
+    return pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
 
 def showtext(win, pos, text, color, bgcolor):
@@ -178,7 +195,7 @@ def main():
 
     pygame.init()
 
-    win = init_window(WINDOW_SIZE)
+    win = init_window(MIN_WINDOW_SIZE)
     pygame.display.set_caption("Event List")
 
     _font = pygame.font.Font(None, FONT_SIZE)
