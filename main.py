@@ -221,10 +221,7 @@ def main():
                 running = False
 
             if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_ESCAPE:
-                    running = False
-                else:
-                    status.lastkey = e.key
+                status.lastkey = e.key
 
             if e.type == pygame.MOUSEBUTTONDOWN:
                 pygame.event.set_grab(True)
